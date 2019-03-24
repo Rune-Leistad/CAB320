@@ -62,11 +62,37 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     '''
-    walls_and_taboo_cells = list()
-    for x in range()
-    print(warehouse.walls)
+    # Retrieving a string representing the warehouse
+    wt_cells = list(warehouse.__str__())
+    # Replacing worker and boxes with blanks
+    wt_cells.replace('@', ' ')
+    wt_cells.replace('!', ' ') # Don't know if this ever occurs
+    wt_cells.replace('$', ' ')
 
-    print(warehouse)
+    for '@' in wt_cells = ' '
+    # Finding the dimentions of the warehouse in order to find the taboo cells
+    X,Y = zip(*warehouse.walls)
+    x_size, y_size = max(X), max(Y)
+
+    # Marking corners that aren't targets as taboo cells
+    for (x, y) in warehouse.walls:
+        # If cell below is also a wall
+        if tuple([x, y + 1]) in warehouse.walls:
+            # Then check if it's a corner
+            if tuple([x + 1, y]) in warehouse.walls:
+                print('Corner at ', x+1, ' ', y+1)
+
+            if tuple([x - 1, y]) in warehouse.walls:
+                print('Corner at ', x+1, ', ', y-1)
+
+        elif tuple([x, y - 1]) in warehouse.walls:
+            if tuple([x + 1, y]) in warehouse.walls:
+                print('Corner at ', x-1, ' ', y+1)
+            elif tuple([x - 1, y]) in warehouse.walls:
+                print('Corner at ', x-1, ', ', y-1)
+
+    print(wt_cells)
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
