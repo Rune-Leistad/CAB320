@@ -62,7 +62,9 @@ def taboo_cells(warehouse):
        The returned string should NOT have marks for the worker, the targets,
        and the boxes.
     '''
-
+    walls_and_taboo_cells = list()
+    for x in range()
+    print(warehouse.walls)
 
     print(warehouse)
 

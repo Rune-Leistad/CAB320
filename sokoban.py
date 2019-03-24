@@ -2,6 +2,7 @@
 
 import operator
 import functools
+import mySokobanSolver as mss
 '''
 
 This module defines utility functions and classes for a sokoban assignment.
@@ -177,6 +178,8 @@ if __name__ == "__main__":
 #    field.save_warehouse("./F_01.txt")
 
     print(wh)   # this calls    wh.__str__()
+
+    mss.taboo_cells(wh)
 
 
 # + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
