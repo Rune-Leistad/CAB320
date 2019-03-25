@@ -40,6 +40,65 @@ def my_team():
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+'''
+Identifying whether or not a cell is indside or outside of the walls in the
+warehouse
+
+@param warehouse: A Warehouse object
+@param cell: The coordiantes of the cell you want to check
+@param X: The max(x) coordinate
+@param Y: The max(Y) coordinate
+    
+@return 
+    True if the given cell has a wall in the north, east, south and west
+    False if no wall was found in any one of the directions
+'''
+def cell_inside(warehouse, cell, X, Y):
+    if cell in warehouse.walls:
+        return False
+    x = cell[0]
+    y = cell[1]
+  
+    north = False
+    south = False
+    west = False
+    east = False
+
+    # Checking if a cell is inside or outside the walls
+    # First checking x in Left directoin
+    while x >= 0:
+        x -= 1
+        if tuple([x, y]) in warehouse.walls:
+            west = True
+            break
+        
+    x = cell[0]
+    # Checking x in right direction
+    while x < X:
+        x += 1
+        if tuple([x, y]) in warehouse.walls:
+            east = True
+            break
+            
+    # Now checking y upwards
+    while y >= 0:
+        y -= 1
+        if tuple([x, y]) in warehouse.walls:
+            north = True
+            break
+    y = cell[1]
+    # Y downwards
+    while y < Y:
+        y += 1
+        if tuple([x, y]) in warehouse.walls:
+            south = True
+            break
+                                
+    print(north, west, south, east)
+    
+    return north and south and east and west
+    
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def taboo_cells(warehouse):
     '''
@@ -63,35 +122,42 @@ def taboo_cells(warehouse):
        and the boxes.
     '''
     # Retrieving a string representing the warehouse
-    wt_cells = list(warehouse.__str__())
+    wt_cells = warehouse.__str__()
     # Replacing worker and boxes with blanks
-    wt_cells.replace('@', ' ')
-    wt_cells.replace('!', ' ') # Don't know if this ever occurs
-    wt_cells.replace('$', ' ')
+    wt_cells = wt_cells.replace('@', ' ')
+    wt_cells = wt_cells.replace('!', ' ') # Don't know if this ever occurs
+    wt_cells = wt_cells.replace('$', ' ')
 
-    for '@' in wt_cells = ' '
     # Finding the dimentions of the warehouse in order to find the taboo cells
     X,Y = zip(*warehouse.walls)
     x_size, y_size = max(X), max(Y)
+    
+    test_cells = list(wt_cells)
+    line_size = x_size + 2 # The size of each line in the string
 
     # Marking corners that aren't targets as taboo cells
     for (x, y) in warehouse.walls:
-        # If cell below is also a wall
+        # If 
         if tuple([x, y + 1]) in warehouse.walls:
             # Then check if it's a corner
             if tuple([x + 1, y]) in warehouse.walls:
-                print('Corner at ', x+1, ' ', y+1)
+                if cell_inside(warehouse, tuple([x + 1, y + 1]), x_size, y_size) and tuple([x+1, y+1]) not in warehouse.targets:
+                    test_cells[x+1 + (y+1) * line_size] = 'X'
 
             if tuple([x - 1, y]) in warehouse.walls:
-                print('Corner at ', x+1, ', ', y-1)
+                if cell_inside(warehouse, tuple([x - 1, y + 1]), x_size, y_size):
+                    test_cells[x-1 + (y+1) * line_size] = 'X'
 
         elif tuple([x, y - 1]) in warehouse.walls:
             if tuple([x + 1, y]) in warehouse.walls:
-                print('Corner at ', x-1, ' ', y+1)
+                if cell_inside(warehouse, tuple([x + 1, y - 1]), x_size, y_size):
+                    test_cells[x+1 + (y-1) * line_size] = 'X'
             elif tuple([x - 1, y]) in warehouse.walls:
-                print('Corner at ', x-1, ', ', y-1)
+                if cell_inside(warehouse, tuple([x - 1, y - 1]), x_size, y_size):
+                    test_cells[x-1 + (y-1) * line_size] = 'X'
 
-    print(wt_cells)
+    print("".join(test_cells))
+
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
