@@ -36,7 +36,7 @@ def my_team():
 
     '''
 #    return [ (1234567, 'Ada', 'Lovelace'), (1234568, 'Grace', 'Hopper'), (1234569, 'Eva', 'Tardos') ]
-    return [(9776460, 'Rune', 'Leistad'), (0000000, 'Jenny', 'Bogen Griffiths')]
+    return [(9776460, 'Rune', 'Leistad'), (10405127, 'Jenny', 'Bogen Griffiths')]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -132,7 +132,10 @@ class SokobanPuzzle(search.Problem):
 
 
     def __init__(self, warehouse):
-        raise NotImplementedError()
+        self.allow_taboo_push = False
+        self.macro = True
+        #self.goal = ?
+        #self.initial = ?
 
     def actions(self, state):
         """
@@ -142,8 +145,51 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
+        if self.macro:
+            
+            if self.allow_taboo_push:
+                
+            else:
+                
+        
+        else:
+            if self.allow_taboo_push:
+                
+            else:
+                
+        
         raise NotImplementedError
-
+        
+    def result(self, state, action):
+        next_state = list(state)
+        assert action in self.actions(state)
+        
+        if self.macro:
+            move = action[1]
+            x = action[0][0]
+            y = action[0][1]
+            pos_worker = tuple([x,y])
+        
+            if move == 'Up':
+                y += 1
+            if move = 'Down':
+                y -= 1
+            if move = 'Left':
+                x -=1
+            if move = 'Right':
+                x +=1
+            pos_box = tuple([x,y])
+            #move box to pos_box
+            #move worker to pos_worker
+            #generate a new warehouse and return as next_state(?)
+        else:
+            
+        return tuple(next_state)
+        
+    """
+    def goal_test(self, state):
+        return state == self.goal
+    """
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def check_action_seq(warehouse, action_seq):
@@ -171,7 +217,11 @@ def check_action_seq(warehouse, action_seq):
     '''
 
     ##         "INSERT YOUR CODE HERE"
-
+    
+    """
+    for action in action_seq
+        
+    """
     raise NotImplementedError()
 
 
