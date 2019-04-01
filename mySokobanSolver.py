@@ -41,6 +41,29 @@ def my_team():
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 '''
+Takes an array of coordinate and finds corners that has their 90 degree angle wall
+inside the warehouse.
+@param walls A tuple of coordinates for each of the walls in the warehouse
+'''
+def find_corners(walls):
+    for wall in walls:
+        corner = False
+        if(tuple([wall[0] + 1, wall[1]]) in walls and tuple([wall[0], wall[1] + 1]) in walls):
+            yield 'SE-CORNER', [wall[0],wall[1]] # South east
+            corner = True
+        if(tuple([wall[0] - 1, wall[1]]) in walls and tuple([wall[0], wall[1] + 1]) in walls):
+            yield 'SW-CORNER', [wall[0],wall[1]] # South west corner
+            corner = True
+        if(tuple([wall[0] - 1, wall[1]]) in walls and tuple([wall[0], wall[1] - 1]) in walls):
+            yield 'NW-CORNER', [wall[0],wall[1]] # North west corner
+            corner = True
+        if(tuple([wall[0] + 1, wall[1]]) in walls and tuple([wall[0], wall[1] - 1]) in walls):
+            yield 'NE-CORNER', [wall[0],wall[1]] # North east corner
+            corner = True
+        if not corner:
+            yield 'WALL', [wall[0],wall[1]]
+
+'''
 Identifying whether or not a cell is indside or outside of the walls in the
 warehouse
 
@@ -48,56 +71,28 @@ warehouse
 @param cell: The coordiantes of the cell you want to check
 @param X: The max(x) coordinate
 @param Y: The max(Y) coordinate
-    
-@return 
+
+@return
     True if the given cell has a wall in the north, east, south and west
     False if no wall was found in any one of the directions
 '''
 def cell_inside(warehouse, cell, X, Y):
-    if cell in warehouse.walls:
-        return False
-    x = cell[0]
-    y = cell[1]
-  
-    north = False
-    south = False
-    west = False
-    east = False
+    wall_count = 0
+    directions = [[1, 0], [0, 1], [0, -1], [-1, 0]] # [east, south, north, west]
 
-    # Checking if a cell is inside or outside the walls
-    # First checking x in Left directoin
-    while x >= 0:
-        x -= 1
-        if tuple([x, y]) in warehouse.walls:
-            west = True
-            break
-        
-    x = cell[0]
-    # Checking x in right direction
-    while x < X:
-        x += 1
-        if tuple([x, y]) in warehouse.walls:
-            east = True
-            break
-            
-    # Now checking y upwards
-    while y >= 0:
-        y -= 1
-        if tuple([x, y]) in warehouse.walls:
-            north = True
-            break
-    y = cell[1]
-    # Y downwards
-    while y < Y:
-        y += 1
-        if tuple([x, y]) in warehouse.walls:
-            south = True
-            break
-                                
-    print(north, west, south, east)
-    
-    return north and south and east and west
-    
+    for dir in directions:
+        x = cell[0]
+        y = cell[1]
+        while(x > -1 and x < X and y > -1 and y < Y):
+            x += dir[0]
+            y += dir[1]
+            if tuple([x, y]) in warehouse.walls:
+                wall_count += 1
+                break
+
+
+    return wall_count == 4
+
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def taboo_cells(warehouse):
@@ -123,40 +118,77 @@ def taboo_cells(warehouse):
     '''
     # Retrieving a string representing the warehouse
     wt_cells = warehouse.__str__()
-    # Replacing worker and boxes with blanks
-    wt_cells = wt_cells.replace('@', ' ')
-    wt_cells = wt_cells.replace('!', ' ') # Don't know if this ever occurs
-    wt_cells = wt_cells.replace('$', ' ')
+    legal_characters = ['#', ' ', '\n']
 
-    # Finding the dimentions of the warehouse in order to find the taboo cells
+    # Replacing everything that isn't a wall, blank space or new line with ' '
+    for cell in wt_cells:
+        if cell not in legal_characters:
+            wt_cells = wt_cells.replace(cell, ' ')
+
+    # Finding the dimentions of the warehouse
     X,Y = zip(*warehouse.walls)
     x_size, y_size = max(X), max(Y)
-    
-    test_cells = list(wt_cells)
-    line_size = x_size + 2 # The size of each line in the string
+    # Converting string to a list to easier replace cell content
+    taboo = list(wt_cells)
+    line_size = x_size + 2 # The size of each line in the string (inkl. '\n')
+    walls_and_corners = find_corners(warehouse.walls.copy())
 
-    # Marking corners that aren't targets as taboo cells
-    for (x, y) in warehouse.walls:
-        # If 
-        if tuple([x, y + 1]) in warehouse.walls:
-            # Then check if it's a corner
-            if tuple([x + 1, y]) in warehouse.walls:
-                if cell_inside(warehouse, tuple([x + 1, y + 1]), x_size, y_size) and tuple([x+1, y+1]) not in warehouse.targets:
-                    test_cells[x+1 + (y+1) * line_size] = 'X'
+    # Looping through all the walls, and for those who are corners set taboo cell
+    # iff cell is not a target
+    for wall in walls_and_corners:
+        x = wall[1][0]
+        y = wall[1][1]
+        if wall[0] == 'SE-CORNER':
+            if tuple([x+1, y+1]) not in warehouse.targets and \
+            cell_inside(warehouse, tuple([x+1, y+1]), x_size, y_size):
+                taboo[(x+1) + ((y+1) * line_size)] = 'X'
+        elif wall[0] == 'SW-CORNER':
+            if tuple([x-1, y+1]) not in warehouse.targets and \
+            cell_inside(warehouse, tuple([x-1, y+1]), x_size, y_size):
+                taboo[(x-1) + ((y+1) * line_size)] = 'X'
+        elif wall[0] == 'NE-CORNER':
+            if tuple([x+1, y-1]) not in warehouse.targets and \
+            cell_inside(warehouse, tuple([x+1, y-1]), x_size, y_size):
+                taboo[(x+1) + ((y-1) * line_size)] = 'X'
+        elif wall[0] == 'NW-CORNER':
+            if tuple([x-1, y-1]) not in warehouse.targets and \
+            cell_inside(warehouse, tuple([x-1, y-1]), x_size, y_size):
+                taboo[(x-1) + ((y-1) * line_size)] = 'X'
 
-            if tuple([x - 1, y]) in warehouse.walls:
-                if cell_inside(warehouse, tuple([x - 1, y + 1]), x_size, y_size):
-                    test_cells[x-1 + (y+1) * line_size] = 'X'
+    # Finding entire walls to be marked taboo
+    taboo_walls = find_corners(warehouse.walls.copy())
 
-        elif tuple([x, y - 1]) in warehouse.walls:
-            if tuple([x + 1, y]) in warehouse.walls:
-                if cell_inside(warehouse, tuple([x + 1, y - 1]), x_size, y_size):
-                    test_cells[x+1 + (y-1) * line_size] = 'X'
-            elif tuple([x - 1, y]) in warehouse.walls:
-                if cell_inside(warehouse, tuple([x - 1, y - 1]), x_size, y_size):
-                    test_cells[x-1 + (y-1) * line_size] = 'X'
+    # find taboo cells
+    # when found, find all neighbouring walls.
+    # for each wall go in x direction untill corner or blank space is found or
+    # target is found next to the wall.
+    # If matching corner set entire wall taboo.
 
-    print("".join(test_cells))
+    for wall in taboo_walls:
+        directions = []
+        if wall[0] == 'SE-CORNER':
+            directions = [[1, 0], [0, 1]] # [0] = east, [1] = south
+        if wall[0] == 'NW-CORNER':
+            directions = [[-1, 0], [0, -1]] # [0] = west, [1] = north
+
+        for dir in directions:
+
+            next_wall = tuple([wall[1][0] + dir[0], wall[1][1] + dir[1]])
+            tb_cell = tuple([wall[1][0] + sum(dir), wall[1][1] + sum(dir)])
+            # As long as it's still a possible taboo wall
+            while (next_wall in warehouse.walls and
+            (tb_cell not in warehouse.targets and tb_cell not in warehouse.walls)):
+                next_wall = tuple([next_wall[0] + dir[0], next_wall[1] + dir[1]])
+                tb_cell = tuple([tb_cell[0] + dir[0], tb_cell[1] + dir[1]])
+            # If while loop breaks out and these condictions match, then its a taboo wall
+            if next_wall in warehouse.walls and tb_cell in warehouse.walls:
+                tb_cell = tuple([wall[1][0] + sum(dir), wall[1][1] + sum(dir)])
+                while tb_cell not in warehouse.walls:
+                    taboo[(tb_cell[0]) + ((tb_cell[1]) * line_size)] = 'X'
+                    tb_cell = tuple([tb_cell[0] + dir[0], tb_cell[1] + dir[1]])
+
+
+    return "".join(taboo)
 
 
 
