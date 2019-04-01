@@ -201,7 +201,7 @@ class SokobanPuzzle(search.Problem):
         self.allow_taboo_push = False
         self.macro = True
         #self.goal = ?
-        #self.initial = ?
+        self.initial = warehouse
 
     def actions(self, state):
         """
@@ -211,7 +211,16 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
+        wh = state.__str__() #warehouse
+        y = state.worker[1]
+        x = state.worker[0]
+        actions = []
+        wt = taboo_cells(state) #taboo cells
+        
         if self.macro:
+            #use can_go_there() to check which boxes is reachable?
+            #For each reachable box, check which way it can be pushed
+            #actions will be a list of every way every reachable box can be pushed
             
             if self.allow_taboo_push:
                 
@@ -219,18 +228,34 @@ class SokobanPuzzle(search.Problem):
                 
         
         else:
-            if self.allow_taboo_push:
-                
+            if self.allow_taboo_push: #define all possible actions here, need more conditions
+                if (tuple([x+1][y]) not in state.walls):
+                    actions.append('Right')
+                elif tuple([x-1][y]) not in state.walls:
+                    actions.append('Left')
+                elif tuple([x][y+1]) not in state.walls:
+                    actions.append('Up')
+                elif tuple([x][y-1]) not in state.walls:
+                    actions.append('Down')
             else:
-                
-        
-        raise NotImplementedError
+                if ('Right' in actions) && (wt[x+1][y]=='X'):
+                    actions.pop(actions(index('Right')))
+                elif ('Left' in actions) && (wt[x-1][y]=='X'):
+                    actions.pop(actions(index('Left')))
+                elif ('Up' in actions) && (wt[x][y+1]=='X'):
+                    actions.pop(actions(index('Up'))) 
+                elif ('Down' in actions) && (wt[x][y-1]=='X'):
+                    actions.pop(actions(index('Down'))) 
+                    
+        return actions
         
     def result(self, state, action):
         next_state = list(state)
         assert action in self.actions(state)
         
-        if self.macro:
+        wh = state.__str__()
+        
+        if self.macro: #action = ((r1,c1), a1)
             move = action[1]
             x = action[0][0]
             y = action[0][1]
@@ -238,24 +263,45 @@ class SokobanPuzzle(search.Problem):
         
             if move == 'Up':
                 y += 1
-            if move = 'Down':
+            elif move = 'Down':
                 y -= 1
-            if move = 'Left':
-                x -=1
-            if move = 'Right':
-                x +=1
+            elif move = 'Left':
+                x -= 1
+            elif move = 'Right':
+                x += 1
             pos_box = tuple([x,y])
-            #move box to pos_box
-            #move worker to pos_worker
-            #generate a new warehouse and return as next_state(?)
-        else:
             
+        else: #elementary action
+            if action == 'Up':
+                y += 1
+            elif action = 'Down':
+                y -= 1
+            elif action = 'Left':
+                x -= 1
+            elif action = 'Right':
+                x += 1
+            pos_worker = tuple([x,y])
+            if pos_worker in state.boxes:
+                if action == 'Up':
+                    y += 1
+                elif action = 'Down':
+                    y -= 1
+                elif action = 'Left':
+                    x -= 1
+                elif action = 'Right':
+                    x += 1
+                pos_box = tuple([x,y])
+                
+        #move box to pos_box
+        #move worker to pos_worker
+        #generate a new warehouse and return as next_state(?)
+        
         return tuple(next_state)
         
-    """
+    
     def goal_test(self, state):
         return state == self.goal
-    """
+    
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def check_action_seq(warehouse, action_seq):
@@ -283,12 +329,14 @@ def check_action_seq(warehouse, action_seq):
     '''
 
     ##         "INSERT YOUR CODE HERE"
+    for action in action_seq:
+        if action not in actions(warehouse):
+            return 'Failure'
+        else:
+            warehouse = result(warehouse,action)
     
-    """
-    for action in action_seq
+    return warehouse.__str__()
         
-    """
-    raise NotImplementedError()
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
