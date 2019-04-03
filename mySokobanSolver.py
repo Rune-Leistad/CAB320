@@ -232,6 +232,7 @@ class SokobanPuzzle(search.Problem):
     def __init__(self, warehouse):
         self.allow_taboo_push = False
         self.macro = True
+        self.taboo = taboo_cells(warehouse)
         #self.goal = ?
         self.initial = warehouse
 
