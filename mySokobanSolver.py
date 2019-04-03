@@ -244,6 +244,81 @@ class SokobanPuzzle(search.Problem):
         'self.allow_taboo_push' and 'self.macro' should be tested to determine
         what type of list of actions is to be returned.
         """
+
+
+        # Creating a 2d list of the taboo_cells output
+        2d_taboo = []
+        2d_taboo.append([])
+        i = 0
+        for line in self.taboo:
+            for char in line:
+                if char == '\n':
+                    2d_taboo.append([])
+                    i += 1
+                else:
+                    2d_taboo[i].append(char)
+
+        if not self.macro:
+            worker = self.warehouse.worker
+            right = tuple([worker[0] + 1, worker[1]])
+            left = tuple([worker[0] - 1, worker[1]])
+            down = tuple([worker[0], worker[1] + 1])
+            up = tuple([worker[0], worker[1] - 1])
+            if right not in state.walls and right not in state.boxes:
+                yield right, 'Right'
+            if left not in state.walls and left not in state.boxes:
+                yield left, 'Left'
+            if down not in state.walls and down not in state.boxes:
+                yield down, 'Down'
+            if up not in state.walls and up not in state.boxes:
+                yield up, 'Up'
+
+        # If macro moves, check which boxes can be moved in what direction
+        else:
+            macro_moves = state.boxes
+
+            for cell in macro_moves:
+                right = tuple([cell[0] + 1, cell[1]])
+                left = tuple([cell[0] - 1, cell[1]])
+                down = tuple([cell[0], cell[1] + 1])
+                up = tuple([cell[0], cell[1] - 1])
+
+                # Checking left and right at the same time because if worker can stand
+                # on the left side but there is a wall on the right, then you cant
+                # push the box. Same for up and down. This does NOT check if worker
+                # can_go_there.
+                if (right not in state.walls and right not in state.boxes and
+                left not in state.walls and left not in state.boxes):
+                    if self.allow_taboo_push:
+                        yield right, 'Right'
+                        yield left, 'Left'
+                    else:
+                        if 2d_taboo[left[0]][left[1]] not 'X':
+                            yield right, 'Right'
+                        if 2d_taboo[right[0]][right[1]] not 'X':
+                            yield left, 'Left'
+
+                if (down not in state.walls and down not in state.boxes and
+                up not in state.walls and up not in state.boxes):
+                    if self.allow_taboo_push:
+                        yield down, 'Down'
+                        yield up, 'Up'
+                    else:
+                        if 2d_taboo[down[0]][down[1]] not 'X':
+                            yield up, 'Up'
+                        if 2d_taboo[up[0]][up[1]] not 'X':
+                            yield down, 'Down'
+
+
+    '''
+        def actions(self, state):
+        """
+        Return the list of actions that can be executed in the given state.
+
+        As specified in the header comment of this class, the attributes
+        'self.allow_taboo_push' and 'self.macro' should be tested to determine
+        what type of list of actions is to be returned.
+        """
         wh = state.__str__() #warehouse
         y = state.worker[1]
         x = state.worker[0]
@@ -281,6 +356,7 @@ class SokobanPuzzle(search.Problem):
                     actions.pop(actions(index('Down'))) 
                     
         return actions
+    '''
         
     def result(self, state, action):
         next_state = list(state)
