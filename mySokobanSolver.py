@@ -247,16 +247,16 @@ class SokobanPuzzle(search.Problem):
 
 
         # Creating a 2d list of the taboo_cells output
-        2d_taboo = []
-        2d_taboo.append([])
+        taboo_2d = []
+        taboo_2d.append([])
         i = 0
         for line in self.taboo:
             for char in line:
                 if char == '\n':
-                    2d_taboo.append([])
+                    taboo_2d.append([])
                     i += 1
                 else:
-                    2d_taboo[i].append(char)
+                    taboo_2d[i].append(char)
 
         if not self.macro:
             worker = self.warehouse.worker
@@ -293,9 +293,9 @@ class SokobanPuzzle(search.Problem):
                         yield right, 'Right'
                         yield left, 'Left'
                     else:
-                        if 2d_taboo[left[0]][left[1]] not 'X':
+                        if taboo_2d[left[0]][left[1]] not 'X':
                             yield right, 'Right'
-                        if 2d_taboo[right[0]][right[1]] not 'X':
+                        if taboo_2d[right[0]][right[1]] not 'X':
                             yield left, 'Left'
 
                 if (down not in state.walls and down not in state.boxes and
@@ -304,9 +304,9 @@ class SokobanPuzzle(search.Problem):
                         yield down, 'Down'
                         yield up, 'Up'
                     else:
-                        if 2d_taboo[down[0]][down[1]] not 'X':
+                        if taboo_2d[down[0]][down[1]] not 'X':
                             yield up, 'Up'
-                        if 2d_taboo[up[0]][up[1]] not 'X':
+                        if taboo_2d[up[0]][up[1]] not 'X':
                             yield down, 'Down'
 
 
