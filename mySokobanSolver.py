@@ -246,6 +246,8 @@ class SokobanPuzzle(search.Problem):
         """
 
 
+
+        # Skal dette være en egen metode?!
         # Creating a 2d list of the taboo_cells output
         taboo_2d = []
         taboo_2d.append([])
@@ -253,10 +255,12 @@ class SokobanPuzzle(search.Problem):
         for line in self.taboo:
             for char in line:
                 if char == '\n':
+                    taboo_2d[i].append(char)
                     taboo_2d.append([])
                     i += 1
                 else:
                     taboo_2d[i].append(char)
+
 
         if not self.macro:
             worker = self.warehouse.worker
@@ -285,28 +289,30 @@ class SokobanPuzzle(search.Problem):
 
                 # Checking left and right at the same time because if worker can stand
                 # on the left side but there is a wall on the right, then you cant
-                # push the box. Same for up and down. This does NOT check if worker
-                # can_go_there.
+                # push the box in that dirrection. Same for up and down.
+                # This does NOT check if worker can_go_there.
                 if (right not in state.walls and right not in state.boxes and
                 left not in state.walls and left not in state.boxes):
                     if self.allow_taboo_push:
                         yield right, 'Right'
                         yield left, 'Left'
                     else:
-                        if taboo_2d[left[0]][left[1]] not 'X':
+                        if taboo_2d[down[1]][down[0]] != 'X':
                             yield right, 'Right'
-                        if taboo_2d[right[0]][right[1]] not 'X':
+                        if taboo_2d[down[1]][down[0]] != 'X':
                             yield left, 'Left'
 
                 if (down not in state.walls and down not in state.boxes and
                 up not in state.walls and up not in state.boxes):
+
                     if self.allow_taboo_push:
                         yield down, 'Down'
                         yield up, 'Up'
                     else:
-                        if taboo_2d[down[0]][down[1]] not 'X':
+                        print(taboo_2d)
+                        if taboo_2d[down[1]][down[0]] != 'X':
                             yield up, 'Up'
-                        if taboo_2d[up[0]][up[1]] not 'X':
+                        if taboo_2d[down[1]][down[0]] != 'X':
                             yield down, 'Down'
 
 
@@ -324,17 +330,17 @@ class SokobanPuzzle(search.Problem):
         x = state.worker[0]
         actions = []
         wt = taboo_cells(state) #taboo cells
-        
+
         if self.macro:
             #use can_go_there() to check which boxes is reachable?
             #For each reachable box, check which way it can be pushed
             #actions will be a list of every way every reachable box can be pushed
-            
+
             if self.allow_taboo_push:
-                
+
             else:
-                
-        
+
+
         else:
             if self.allow_taboo_push: #define all possible actions here, need more conditions
                 if (tuple([x+1][y]) not in state.walls):
@@ -351,10 +357,10 @@ class SokobanPuzzle(search.Problem):
                 elif ('Left' in actions) && (wt[x-1][y]=='X'):
                     actions.pop(actions(index('Left')))
                 elif ('Up' in actions) && (wt[x][y+1]=='X'):
-                    actions.pop(actions(index('Up'))) 
+                    actions.pop(actions(index('Up')))
                 elif ('Down' in actions) && (wt[x][y-1]=='X'):
-                    actions.pop(actions(index('Down'))) 
-                    
+                    actions.pop(actions(index('Down')))
+
         return actions
     '''
         
