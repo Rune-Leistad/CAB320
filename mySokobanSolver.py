@@ -231,11 +231,23 @@ class SokobanPuzzle(search.Problem):
 
     def __init__(self, warehouse):
         self.allow_taboo_push = False
-        self.macro = True
+        self.macro = False
         self.taboo = taboo_cells(warehouse)
-        #self.goal = ?
         self.initial = warehouse
 
+        test = warehouse.copy()
+        counter = 0
+        for target in test.targets:
+            for box in test.boxes:
+                if box not in test.targets:
+                    test.boxes.remove(box)
+                    test.boxes.append(test.targets[counter])
+                    counter += 1
+        
+        self.goal = test.copy()
+        print(self.goal)
+        
+        
     def actions(self, state):
         """
         Return the list of actions that can be executed in the given state.
@@ -263,19 +275,43 @@ class SokobanPuzzle(search.Problem):
 
 
         if not self.macro:
-            worker = self.warehouse.worker
+            worker = state.worker
             right = tuple([worker[0] + 1, worker[1]])
             left = tuple([worker[0] - 1, worker[1]])
             down = tuple([worker[0], worker[1] + 1])
             up = tuple([worker[0], worker[1] - 1])
-            if right not in state.walls and right not in state.boxes:
-                yield right, 'Right'
-            if left not in state.walls and left not in state.boxes:
-                yield left, 'Left'
-            if down not in state.walls and down not in state.boxes:
-                yield down, 'Down'
-            if up not in state.walls and up not in state.boxes:
-                yield up, 'Up'
+            if right not in state.walls:
+                if right in state.boxes:
+                    next_right = tuple([right[0] + 1, right[1]])
+                    if (next_right not in state.boxes and next_right not in state.walls):
+                        yield 'Right'
+                else:
+                    yield 'Right'
+                    
+            if left not in state.walls:
+                if left in state.boxes:
+                    next_left = tuple([left[0] - 1, left[1]])
+                    if (next_left not in state.boxes and next_left not in state.walls):
+                        yield 'Left'
+                else:
+                    yield 'Left'
+                    
+            if down not in state.walls:
+                if down in state.boxes:
+                    next_down = tuple([down[0], down[1] + 1])
+                    if (next_down not in state.boxes and next_down not in state.walls):
+                        yield 'Down'
+                else:
+                    yield 'Down'
+                    
+            if up not in state.walls:
+                if up in state.boxes:
+                    next_up = tuple([up[0], up[1] - 1])
+                    if (next_up not in state.boxes and next_up not in state.walls):
+                        yield 'Up'
+                else:
+                    yield 'Up'
+            
 
         # If macro moves, check which boxes can be moved in what direction
         else:
@@ -316,102 +352,53 @@ class SokobanPuzzle(search.Problem):
                             yield down, 'Down'
 
 
-    '''
-        def actions(self, state):
-        """
-        Return the list of actions that can be executed in the given state.
-
-        As specified in the header comment of this class, the attributes
-        'self.allow_taboo_push' and 'self.macro' should be tested to determine
-        what type of list of actions is to be returned.
-        """
-        wh = state.__str__() #warehouse
-        y = state.worker[1]
-        x = state.worker[0]
-        actions = []
-        wt = taboo_cells(state) #taboo cells
-
-        if self.macro:
-            #use can_go_there() to check which boxes is reachable?
-            #For each reachable box, check which way it can be pushed
-            #actions will be a list of every way every reachable box can be pushed
-
-            if self.allow_taboo_push:
-
-            else:
-
-
-        else:
-            if self.allow_taboo_push: #define all possible actions here, need more conditions
-                if (tuple([x+1][y]) not in state.walls):
-                    actions.append('Right')
-                elif tuple([x-1][y]) not in state.walls:
-                    actions.append('Left')
-                elif tuple([x][y+1]) not in state.walls:
-                    actions.append('Up')
-                elif tuple([x][y-1]) not in state.walls:
-                    actions.append('Down')
-            else:
-                if ('Right' in actions) && (wt[x+1][y]=='X'):
-                    actions.pop(actions(index('Right')))
-                elif ('Left' in actions) && (wt[x-1][y]=='X'):
-                    actions.pop(actions(index('Left')))
-                elif ('Up' in actions) && (wt[x][y+1]=='X'):
-                    actions.pop(actions(index('Up')))
-                elif ('Down' in actions) && (wt[x][y-1]=='X'):
-                    actions.pop(actions(index('Down')))
-
-        return actions
-    '''
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         
     def result(self, state, action):
-        next_state = list(state)
+        next_state = state.copy()
         assert action in self.actions(state)
-        
-        wh = state.__str__()
         
         if self.macro: #action = ((r1,c1), a1)
             move = action[1]
             x = action[0][0]
             y = action[0][1]
-            pos_worker = tuple([x,y])
-        
+            
             if move == 'Up':
-                y += 1
-            elif move = 'Down':
                 y -= 1
-            elif move = 'Left':
+            elif move == 'Down':
+                y += 1
+            elif move == 'Left':
                 x -= 1
-            elif move = 'Right':
+            elif move == 'Right':
                 x += 1
-            pos_box = tuple([x,y])
             
         else: #elementary action
+            x = 0
+            y = 0
+            
             if action == 'Up':
-                y += 1
-            elif action = 'Down':
                 y -= 1
-            elif action = 'Left':
+            elif action == 'Down':
+                y += 1
+            elif action == 'Left':
                 x -= 1
-            elif action = 'Right':
+            elif action == 'Right':
                 x += 1
-            pos_worker = tuple([x,y])
-            if pos_worker in state.boxes:
-                if action == 'Up':
-                    y += 1
-                elif action = 'Down':
-                    y -= 1
-                elif action = 'Left':
-                    x -= 1
-                elif action = 'Right':
-                    x += 1
-                pos_box = tuple([x,y])
+            
+            pos_worker = tuple([next_state.worker[0] + x, next_state.worker[1] + y])
+            for box in next_state.boxes:
+                if box == pos_worker:
+                    next_state.boxes.remove(box)
+                    next_state.boxes.append(tuple([box[0] + x, box[1] + y]))
+                    break
+                
+            next_state.worker = pos_worker
                 
         #move box to pos_box
         #move worker to pos_worker
         #generate a new warehouse and return as next_state(?)
         
-        return tuple(next_state)
+        return next_state
         
     
     def goal_test(self, state):
@@ -472,8 +459,10 @@ def solve_sokoban_elem(warehouse):
     '''
 
     ##         "INSERT YOUR CODE HERE"
+    
+    
 
-    raise NotImplementedError()
+    return 'Impossible'
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
