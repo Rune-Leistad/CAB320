@@ -177,9 +177,14 @@ if __name__ == "__main__":
     wh.load_warehouse("./warehouses/warehouse_03.txt")
 #    field.save_warehouse("./F_01.txt")
 
-    print(wh)   # this calls    wh.__str__()
+    #print(wh)
 
-    mss.taboo_cells(wh)
+    soko = mss.SokobanPuzzle(wh)
+    print(mss.check_action_seq(wh, ['Right', 'Up', 'Left']))
+
+
+
+
 
 
 # + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + + +
