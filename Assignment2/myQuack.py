@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 import math
 
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, mean_squared_error 
 
@@ -26,9 +28,8 @@ def my_team():
     '''
     Return the list of the team members of this assignment submission as a list
     of triplet of the form (student_number, first_name, last_name)
-    
     '''
-#    return [ (1234567, 'Ada', 'Lovelace'), (1234568, 'Grace', 'Hopper'), (1234569, 'Eva', 'Tardos') ]
+    
     return [(9776460, 'Rune' 'Leistad'), (12345678, 'Jenny', 'Griffiths')]
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -75,7 +76,7 @@ def prepare_dataset(dataset_path):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def build_DecisionTree_classifier(X_training, y_training):
+def build_DecisionTree_classifier(X_training, y_training,depth):
     '''  
     Build a Decision Tree classifier based on the training set X_training, y_training.
 
@@ -86,8 +87,35 @@ def build_DecisionTree_classifier(X_training, y_training):
     @return
 	clf : the classifier built in this function
     '''
-    ##         "INSERT YOUR CODE HERE"    
-    raise NotImplementedError()
+    ##         "INSERT YOUR CODE HERE"  
+    
+    clf = DecisionTreeClassifier(max_depth = depth).fit(X_training,y_training)
+    
+    return clf
+
+def test_DecisionTree(depth_values,X_train, X_test, y_train, y_test):
+    
+    error = []
+    min_error = math.inf
+    
+    for depth in depth_values:  
+        clf = build_DecisionTree_classifier(X_train,y_train,depth)
+        pred_i = clf.predict(X_test)
+        mean_error = np.mean(pred_i != y_test)
+        if mean_error < min_error:
+            min_error = mean_error
+            best_depth = depth
+        error.append(mean_error)
+        #print(classification_report(y_test, y_pred)) 
+    
+    plt.figure(figsize=(12, 6))  
+    plt.plot(range(1, len(depth_values)+1), error, color='black', linestyle='dashed', marker='o',  
+             markerfacecolor='blue', markersize=5)
+    plt.title('Error Rate Tree depth')  
+    plt.xlabel('Depth of tree')  
+    plt.ylabel('Mean Error')
+    return best_depth
+    
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -106,13 +134,15 @@ def build_NearestNeighbours_classifier(X_training, y_training,K):
     ##         "INSERT YOUR CODE HERE"   
     clf = KNeighborsClassifier(n_neighbors=K,algorithm='auto').fit(X_training,y_training)
     
-    
     return clf
 
 def test_kNN(K_values, X_train, X_test, y_train, y_test):
     """
     @param
     K_values: Nearest neighbor values to be tested
+    
+    @return
+    best_K: One of the possible optimal values of K
     """
     error = []
     min_error = math.inf
@@ -128,8 +158,8 @@ def test_kNN(K_values, X_train, X_test, y_train, y_test):
         #print(classification_report(y_test, y_pred)) 
     
     plt.figure(figsize=(12, 6))  
-    plt.plot(range(1, 40), error, color='red', linestyle='dashed', marker='o',  
-             markerfacecolor='blue', markersize=10)
+    plt.plot(range(1, len(K_values)), error, color='black', linestyle='dashed', marker='o',  
+             markerfacecolor='blue', markersize=5)
     plt.title('Error Rate K Value')  
     plt.xlabel('K Value')  
     plt.ylabel('Mean Error')
@@ -150,7 +180,9 @@ def build_SupportVectorMachine_classifier(X_training, y_training):
     @return
 	clf : the classifier built in this function
     '''
-    ##         "INSERT YOUR CODE HERE"    
+    ##         "INSERT YOUR CODE HERE"
+    
+    
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -185,12 +217,14 @@ if __name__ == "__main__":
     
     
     # train and test nearest neighbor classifier
-    K_values = np.arange(1,40)
-    best_k = test_kNN(K_values, X_train, X_test, y_train, y_test)
-    print('One possible optimal value of K is: ' + str(best_k))
+    K_values = np.arange(1,70)
+    #best_k = test_kNN(K_values, X_train, X_test, y_train, y_test)
+    #print('One possible optimal value of K is: ' + str(best_k))
     
-    
-    
+    # train and test decision tree classifier
+    best_depth = test_DecisionTree(K_values, X_train, X_test, y_train, y_test)
+    print('One possible optimal tree depth: ' + str(best_depth))
+
     
     #for precision evaluation of algorithm
     # https://stackabuse.com/k-nearest-neighbors-algorithm-in-python-and-scikit-learn/
