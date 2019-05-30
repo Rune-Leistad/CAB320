@@ -76,7 +76,7 @@ def prepare_dataset(dataset_path):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def build_DecisionTree_classifier(X_training, y_training,depth):
+def build_DecisionTree_classifier(X_training, y_training, max_depth):
     '''  
     Build a Decision Tree classifier based on the training set X_training, y_training.
 
@@ -88,38 +88,45 @@ def build_DecisionTree_classifier(X_training, y_training,depth):
 	clf : the classifier built in this function
     '''
     ##         "INSERT YOUR CODE HERE"  
+    clf = DecisionTreeClassifier()
     
-    clf = DecisionTreeClassifier(max_depth = depth).fit(X_training,y_training)
+    tuned_parameters = [{'max_depth': np.arange(1,max_depth+1)}]
+    
+    clf = GridSearchCV(clf,tuned_parameters)
+    
+    clf.fit(X_training,y_training)
     
     return clf
 
-def test_DecisionTree(depth_values,X_train, X_test, y_train, y_test):
+def DT_evaluation(clf,x_axis,n_folds,X_train,X_test,y_train,y_test):
     
-    error = []
-    min_error = math.inf
+    scores = clf.cv_results_['mean_test_score']
+    scores_std = clf.cv_results_['std_test_score']
+    std_error = scores_std / np.sqrt(n_folds)
     
-    for depth in depth_values:  
-        clf = build_DecisionTree_classifier(X_train,y_train,depth)
-        pred_i = clf.predict(X_test)
-        mean_error = np.mean(pred_i != y_test)
-        if mean_error < min_error:
-            min_error = mean_error
-            best_depth = depth
-        error.append(mean_error)
-        #print(classification_report(y_test, y_pred)) 
-    
-    plt.figure(figsize=(12, 6))  
-    plt.plot(range(1, len(depth_values)+1), error, color='black', linestyle='dashed', marker='o',  
+    plt.figure()
+    plt.plot(x_axis, scores + std_error, 'b--o', markersize=3)
+    plt.plot(x_axis, scores - std_error, 'b--o', markersize=3)
+    plt.plot(x_axis, scores,color='black', marker='o',  
              markerfacecolor='blue', markersize=5)
-    plt.title('Error Rate Tree depth')  
-    plt.xlabel('Depth of tree')  
-    plt.ylabel('Mean Error')
-    return best_depth
+    plt.fill_between(x_axis, scores + std_error, scores - std_error, alpha=0.2)
+    plt.xlabel('Maximum tree depth')
+    plt.ylabel('Cross validation score +/- std error')
+    plt.title('Cross validation results')
+
+    pred_train = clf.predict(X_train)
+    pred_test = clf.predict(X_test)
+    
+    print('Classification report for training data: \n', classification_report(y_train, pred_train))
+    print('Classification report for test data: \n',  classification_report(y_test, pred_test))
+    print('The best choice of depth: ' + str(clf.best_params_['max_depth']))
+    # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
+
     
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def build_NearestNeighbours_classifier(X_training, y_training,K):
+def build_NearestNeighbours_classifier(X_training, y_training,K_max):
     '''  
     Build a Nearrest Neighbours classifier based on the training set X_training, y_training.
 
@@ -131,40 +138,55 @@ def build_NearestNeighbours_classifier(X_training, y_training,K):
     @return
 	clf : the classifier built in this function
     '''
+    
     ##         "INSERT YOUR CODE HERE"   
-    clf = KNeighborsClassifier(n_neighbors=K,algorithm='auto').fit(X_training,y_training)
+    clf = KNeighborsClassifier(algorithm='auto')
+    
+    tuned_parameters = [{'n_neighbors': np.arange(1,K_max+1)}]
+    
+    clf = GridSearchCV(clf,tuned_parameters,cv=5)
+    
+    clf.fit(X_training,y_training)
     
     return clf
 
-def test_kNN(K_values, X_train, X_test, y_train, y_test):
-    """
+def kNN_evaluation(clf,x_axis,n_folds,X_train,X_test,y_train,y_test):
+    '''
+    Plot and evaluate results of cross validation
+    Evaluate performance of classifier on both train and test data
+    
     @param
-    K_values: Nearest neighbor values to be tested
+    clf: Classifier
+    x_axis: Vector of K-values for ploting against CV scores
+    n_folds: Number folds used in the KFold CV
+    X_train: X_train[i,:] is the ith example
+    X_test: X_test[i,:] is the ith test example
+    y_train: y_train[i] is the class label of X_train[i,:]
+    y_test: y_test[i] is the class label of X_test[i,:]
+    '''
     
-    @return
-    best_K: One of the possible optimal values of K
-    """
-    error = []
-    min_error = math.inf
+    scores = clf.cv_results_['mean_test_score']
+    scores_std = clf.cv_results_['std_test_score']
+    std_error = scores_std / np.sqrt(n_folds)
     
-    for K in K_values:  
-        clf = build_NearestNeighbours_classifier(X_train, y_train, K)
-        pred_i = clf.predict(X_test)
-        mean_error = np.mean(pred_i != y_test)
-        if mean_error < min_error:
-            min_error = mean_error
-            best_k = K
-        error.append(mean_error)
-        #print(classification_report(y_test, y_pred)) 
-    
-    plt.figure(figsize=(12, 6))  
-    plt.plot(range(1, len(K_values)), error, color='black', linestyle='dashed', marker='o',  
+    plt.figure()
+    plt.plot(x_axis, scores + std_error, 'b--o', markersize=3)
+    plt.plot(x_axis, scores - std_error, 'b--o', markersize=3)
+    plt.plot(x_axis, scores,color='black', marker='o',  
              markerfacecolor='blue', markersize=5)
-    plt.title('Error Rate K Value')  
-    plt.xlabel('K Value')  
-    plt.ylabel('Mean Error')
+    plt.fill_between(x_axis, scores + std_error, scores - std_error, alpha=0.2)
+    plt.xlabel('K')
+    plt.ylabel('Cross validation score +/- std error')
+    plt.title('Cross validation results')
     
-    return best_k
+    pred_train = clf.predict(X_train)
+    pred_test = clf.predict(X_test)
+    
+    print('Classification report for training data: \n', classification_report(y_train, pred_train))
+    print('Classification report for test data: \n',  classification_report(y_test, pred_test))
+    print('The best choice of K: ' + str(clf.best_params_['n_neighbors']))
+    # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
+
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -217,19 +239,14 @@ if __name__ == "__main__":
     
     
     # train and test nearest neighbor classifier
-    K_values = np.arange(1,70)
-    #best_k = test_kNN(K_values, X_train, X_test, y_train, y_test)
-    #print('One possible optimal value of K is: ' + str(best_k))
+    K_max = 20 
+    clf = build_NearestNeighbours_classifier(X_train,y_train,K_max)
+    kNN_evaluation(clf,np.arange(1,K_max+1),5,X_train,X_test,y_train,y_test)
     
     # train and test decision tree classifier
-    best_depth = test_DecisionTree(K_values, X_train, X_test, y_train, y_test)
-    print('One possible optimal tree depth: ' + str(best_depth))
+    max_depth = 20
+    clf = build_DecisionTree_classifier(X_train, y_train,max_depth)
+    DT_evaluation(clf,np.arange(1,max_depth+1),n_folds,X_train,X_test,y_train,y_test)
 
     
-    #for precision evaluation of algorithm
-    # https://stackabuse.com/k-nearest-neighbors-algorithm-in-python-and-scikit-learn/
-    #print(confusion_matrix(y_test, y_pred))  
-    #print(classification_report(y_test, y_pred)) 
     
-
-
