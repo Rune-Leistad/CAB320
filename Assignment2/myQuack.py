@@ -13,13 +13,12 @@ You are welcome to use the pandas library if you know it.
 '''
 import numpy as np
 import matplotlib.pyplot as plt
-import math
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report, confusion_matrix, mean_squared_error 
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.metrics import classification_report 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -191,7 +190,7 @@ def kNN_evaluation(clf,x_axis,n_folds,X_train,X_test,y_train,y_test):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def build_SupportVectorMachine_classifier(X_training, y_training):
+def build_SupportVectorMachine_classifier(X_training, y_training, C_min, C_max):
     '''  
     Build a Support Vector Machine classifier based on the training set X_training, y_training.
 
@@ -202,10 +201,42 @@ def build_SupportVectorMachine_classifier(X_training, y_training):
     @return
 	clf : the classifier built in this function
     '''
-    ##         "INSERT YOUR CODE HERE"
+    ##         "INSERT YOUR CODE HERE" 
+    clf = SVC(gamma='scale')
     
+    tuned_parameters = [{'C': np.logspace(C_min,C_max,num=np.absolute(C_max-C_min))}]
     
-    raise NotImplementedError()
+    clf = GridSearchCV(clf,tuned_parameters,cv=5)
+    
+    clf.fit(X_training,y_training)
+    
+    return clf
+
+def SVM_evaluation(clf,x_axis,n_folds,X_train,X_test,y_train,y_test):
+    
+    scores = clf.cv_results_['mean_test_score']
+    scores_std = clf.cv_results_['std_test_score']
+    std_error = scores_std / np.sqrt(n_folds)
+    
+    plt.figure()
+    plt.semilogx(x_axis, scores + std_error, 'b--o', markersize=3)
+    plt.semilogx(x_axis, scores - std_error, 'b--o', markersize=3)
+    plt.semilogx(x_axis, scores,color='black', marker='o',  
+             markerfacecolor='blue', markersize=5)
+    plt.fill_between(x_axis, scores + std_error, scores - std_error, alpha=0.2)
+    plt.xlabel('C')
+    plt.ylabel('Cross validation score +/- std error')
+    plt.title('Cross validation results')
+
+    pred_train = clf.predict(X_train)
+    pred_test = clf.predict(X_test)
+    
+    print('Classification report for training data: \n', classification_report(y_train, pred_train))
+    print('Classification report for test data: \n',  classification_report(y_test, pred_test))
+    print('The best choice of C: ' + str(clf.best_params_['C']))
+    # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
+
+
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -240,6 +271,7 @@ if __name__ == "__main__":
     
     # train and test nearest neighbor classifier
     K_max = 20 
+    n_folds = 5
     clf = build_NearestNeighbours_classifier(X_train,y_train,K_max)
     kNN_evaluation(clf,np.arange(1,K_max+1),5,X_train,X_test,y_train,y_test)
     
@@ -249,4 +281,11 @@ if __name__ == "__main__":
     DT_evaluation(clf,np.arange(1,max_depth+1),n_folds,X_train,X_test,y_train,y_test)
 
     
+    # train and test SVM
+    C_min = -4
+    C_max = 8
+    clf = build_SupportVectorMachine_classifier(X_train, y_train, C_min, C_max)
+    SVM_evaluation(clf,np.logspace(C_min,C_max,num=np.absolute(C_max-C_min)),n_folds,X_train,X_test,y_train,y_test)
+
+
     
