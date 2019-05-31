@@ -18,7 +18,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import classification_report 
+from sklearn.metrics import classification_report, mean_squared_error
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -91,37 +91,11 @@ def build_DecisionTree_classifier(X_training, y_training, max_depth):
     
     tuned_parameters = [{'max_depth': np.arange(1,max_depth+1)}]
     
-    clf = GridSearchCV(clf,tuned_parameters)
+    clf = GridSearchCV(clf,tuned_parameters,cv=3)
     
     clf.fit(X_training,y_training)
     
     return clf
-
-def DT_evaluation(clf,x_axis,n_folds,X_train,X_test,y_train,y_test):
-    
-    scores = clf.cv_results_['mean_test_score']
-    scores_std = clf.cv_results_['std_test_score']
-    std_error = scores_std / np.sqrt(n_folds)
-    
-    plt.figure()
-    plt.plot(x_axis, scores + std_error, 'b--o', markersize=3)
-    plt.plot(x_axis, scores - std_error, 'b--o', markersize=3)
-    plt.plot(x_axis, scores,color='black', marker='o',  
-             markerfacecolor='blue', markersize=5)
-    plt.fill_between(x_axis, scores + std_error, scores - std_error, alpha=0.2)
-    plt.xlabel('Maximum tree depth')
-    plt.ylabel('Cross validation score +/- std error')
-    plt.title('Cross validation results')
-
-    pred_train = clf.predict(X_train)
-    pred_test = clf.predict(X_test)
-    
-    print('Classification report for training data: \n', classification_report(y_train, pred_train))
-    print('Classification report for test data: \n',  classification_report(y_test, pred_test))
-    print('The best choice of depth: ' + str(clf.best_params_['max_depth']))
-    # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
-
-    
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -143,50 +117,11 @@ def build_NearestNeighbours_classifier(X_training, y_training,K_max):
     
     tuned_parameters = [{'n_neighbors': np.arange(1,K_max+1)}]
     
-    clf = GridSearchCV(clf,tuned_parameters,cv=5)
+    clf = GridSearchCV(clf,tuned_parameters,cv=3)
     
     clf.fit(X_training,y_training)
     
     return clf
-
-def kNN_evaluation(clf,x_axis,n_folds,X_train,X_test,y_train,y_test):
-    '''
-    Plot and evaluate results of cross validation
-    Evaluate performance of classifier on both train and test data
-    
-    @param
-    clf: Classifier
-    x_axis: Vector of K-values for ploting against CV scores
-    n_folds: Number folds used in the KFold CV
-    X_train: X_train[i,:] is the ith example
-    X_test: X_test[i,:] is the ith test example
-    y_train: y_train[i] is the class label of X_train[i,:]
-    y_test: y_test[i] is the class label of X_test[i,:]
-    '''
-    
-    scores = clf.cv_results_['mean_test_score']
-    scores_std = clf.cv_results_['std_test_score']
-    std_error = scores_std / np.sqrt(n_folds)
-    
-    plt.figure()
-    plt.plot(x_axis, scores + std_error, 'b--o', markersize=3)
-    plt.plot(x_axis, scores - std_error, 'b--o', markersize=3)
-    plt.plot(x_axis, scores,color='black', marker='o',  
-             markerfacecolor='blue', markersize=5)
-    plt.fill_between(x_axis, scores + std_error, scores - std_error, alpha=0.2)
-    plt.xlabel('K')
-    plt.ylabel('Cross validation score +/- std error')
-    plt.title('Cross validation results')
-    
-    pred_train = clf.predict(X_train)
-    pred_test = clf.predict(X_test)
-    
-    print('Classification report for training data: \n', classification_report(y_train, pred_train))
-    print('Classification report for test data: \n',  classification_report(y_test, pred_test))
-    print('The best choice of K: ' + str(clf.best_params_['n_neighbors']))
-    # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
-
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -206,37 +141,11 @@ def build_SupportVectorMachine_classifier(X_training, y_training, C_min, C_max):
     
     tuned_parameters = [{'C': np.logspace(C_min,C_max,num=np.absolute(C_max-C_min))}]
     
-    clf = GridSearchCV(clf,tuned_parameters,cv=5)
+    clf = GridSearchCV(clf,tuned_parameters,cv=3)
     
     clf.fit(X_training,y_training)
     
     return clf
-
-def SVM_evaluation(clf,x_axis,n_folds,X_train,X_test,y_train,y_test):
-    
-    scores = clf.cv_results_['mean_test_score']
-    scores_std = clf.cv_results_['std_test_score']
-    std_error = scores_std / np.sqrt(n_folds)
-    
-    plt.figure()
-    plt.semilogx(x_axis, scores + std_error, 'b--o', markersize=3)
-    plt.semilogx(x_axis, scores - std_error, 'b--o', markersize=3)
-    plt.semilogx(x_axis, scores,color='black', marker='o',  
-             markerfacecolor='blue', markersize=5)
-    plt.fill_between(x_axis, scores + std_error, scores - std_error, alpha=0.2)
-    plt.xlabel('C')
-    plt.ylabel('Cross validation score +/- std error')
-    plt.title('Cross validation results')
-
-    pred_train = clf.predict(X_train)
-    pred_test = clf.predict(X_test)
-    
-    print('Classification report for training data: \n', classification_report(y_train, pred_train))
-    print('Classification report for test data: \n',  classification_report(y_test, pred_test))
-    print('The best choice of C: ' + str(clf.best_params_['C']))
-    # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
-
-
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -257,6 +166,87 @@ def build_NeuralNetwork_classifier(X_training, y_training):
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+def evaluate_classifier(clf,clf_name, n_folds,X_train,X_test,y_train,y_test,param):
+    '''
+    Plot and evaluate results of cross validation for either decision tree, SVM or kNN classifiers
+    Evaluate performance of classifier on both train and test data
+    
+    @param
+    clf: Classifier
+    clf_name: String identifier for the classifier
+    n_folds: Number folds used in the KFold CV
+    X_train: X_train[i,:] is the ith example
+    X_test: X_test[i,:] is the ith test example
+    y_train: y_train[i] is the class label of X_train[i,:]
+    y_test: y_test[i] is the class label of X_test[i,:]
+    param: The 
+    '''
+    
+    # Calculate scores
+    scores = clf.cv_results_['mean_test_score']
+    scores_std = clf.cv_results_['std_test_score']
+    std_error = scores_std / np.sqrt(n_folds)
+    
+    # Set figure parameters and make figure
+    if clf_name == 'kNN':
+        x_label = 'K'
+        x_axis = np.arange(1,param+1)
+        tuned_param = 'n_neighbors'
+        
+        plt.figure()
+        plt.plot(x_axis, scores + std_error, 'b--o', markersize=3)
+        plt.plot(x_axis, scores - std_error, 'b--o', markersize=3)
+        plt.plot(x_axis, scores,color='black', marker='o',  
+             markerfacecolor='blue', markersize=5)
+        
+    elif clf_name == 'DT':
+        x_label = 'Maximum tree depth'
+        x_axis = np.arange(1,param+1)
+        tuned_param = 'max_depth'
+        
+        plt.figure()
+        plt.plot(x_axis, scores + std_error, 'b--o', markersize=3)
+        plt.plot(x_axis, scores - std_error, 'b--o', markersize=3)
+        plt.plot(x_axis, scores,color='black', marker='o',  
+             markerfacecolor='blue', markersize=5)
+        
+    elif clf_name == 'SVM':
+        x_label = 'C'
+        param_min = param[0]
+        param_max = param[1]
+        x_axis = np.logspace(param_min,param_max,num=np.absolute(param_min-param_max))
+        tuned_param = 'C'
+        
+        plt.figure()
+        plt.semilogx(x_axis, scores + std_error, 'b--o', markersize=3)
+        plt.semilogx(x_axis, scores - std_error, 'b--o', markersize=3)
+        plt.semilogx(x_axis, scores,color='black', marker='o',  
+             markerfacecolor='blue', markersize=5)
+    
+    
+    plt.fill_between(x_axis, scores + std_error, scores - std_error, alpha=0.2)
+    plt.xlabel(x_label)
+    plt.ylabel('Cross validation score +/- std error')
+    plt.title('Cross validation results')
+    
+    # Calculate error rates
+    pred_train = clf.predict(X_train)
+    train_clf_errors = np.sum(y_train!=pred_train)
+    train_mse = mean_squared_error(pred_train,y_train)
+    
+    pred_test = clf.predict(X_test)
+    test_clf_errors = np.sum(y_test!=pred_test)
+    test_mse = mean_squared_error(pred_test,y_test)
+    
+    # Print summary
+    print(clf_name +' \nNumber of errors on training data: ', train_clf_errors, '\nMSE for training data', train_mse)
+    print('Number of errors on test data: ', test_clf_errors, '\nMSE for test data', test_mse)
+    print('The best choice of ' + x_label + ': ' + str(clf.best_params_[tuned_param]),'\n')
+    #print('Classification report for training data: \n', classification_report(y_train, pred_train))
+    #print('Classification report for test data: \n',  classification_report(y_test, pred_test))
+    # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
+
+
 
 if __name__ == "__main__":
     # Write a main part that calls the different 
@@ -271,21 +261,24 @@ if __name__ == "__main__":
     
     # train and test nearest neighbor classifier
     K_max = 20 
-    n_folds = 5
+    n_folds = 3
     clf = build_NearestNeighbours_classifier(X_train,y_train,K_max)
-    kNN_evaluation(clf,np.arange(1,K_max+1),5,X_train,X_test,y_train,y_test)
+    evaluate_classifier(clf,'kNN',n_folds,X_train,X_test,y_train,y_test,K_max)
+    #kNN_evaluation(clf,np.arange(1,K_max+1),5,X_train,X_test,y_train,y_test)
     
     # train and test decision tree classifier
     max_depth = 20
     clf = build_DecisionTree_classifier(X_train, y_train,max_depth)
-    DT_evaluation(clf,np.arange(1,max_depth+1),n_folds,X_train,X_test,y_train,y_test)
+    evaluate_classifier(clf,'DT',n_folds,X_train,X_test,y_train,y_test,max_depth)
+    #DT_evaluation(clf,np.arange(1,max_depth+1),n_folds,X_train,X_test,y_train,y_test)
 
     
     # train and test SVM
     C_min = -4
     C_max = 8
     clf = build_SupportVectorMachine_classifier(X_train, y_train, C_min, C_max)
-    SVM_evaluation(clf,np.logspace(C_min,C_max,num=np.absolute(C_max-C_min)),n_folds,X_train,X_test,y_train,y_test)
+    evaluate_classifier(clf,'SVM',n_folds,X_train,X_test,y_train,y_test,[C_min,C_max])
+    #SVM_evaluation(clf,np.logspace(C_min,C_max,num=np.absolute(C_max-C_min)),n_folds,X_train,X_test,y_train,y_test)
 
 
     
