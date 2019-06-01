@@ -150,20 +150,27 @@ def build_SupportVectorMachine_classifier(X_training, y_training, C_min, C_max, 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 def build_NeuralNetwork_classifier(X_training, y_training):
-    '''  
-    Build a Neural Network with two dense hidden layers classifier 
+    '''
+    Build a Neural Network with two dense hidden layers classifier
     based on the training set X_training, y_training.
     Use the Keras functions from the Tensorflow library
-
-    @param 
+    @param
 	X_training: X_training[i,:] is the ith example
 	y_training: y_training[i] is the class label of X_training[i,:]
-
     @return
 	clf : the classifier built in this function
     '''
-    ##         "INSERT YOUR CODE HERE"    
-    raise NotImplementedError()
+
+    clf = Sequential()
+    clf.add(Dense(30, input_dim=30, activation='relu'))
+    clf.add(Dense(10, activation='softmax'))
+    clf.add(Dense(1, activation='sigmoid'))
+    clf.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    clf.fit(X_training, y_training, epochs=100)
+    #scores = clf.evaluate(X_training, y_training)
+    #print("\n%s: %.2f%%" % (clf.metrics_names[1], scores[1]*100))
+    return clf
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test, param):
