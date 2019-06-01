@@ -75,7 +75,7 @@ def prepare_dataset(dataset_path):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def build_DecisionTree_classifier(X_training, y_training, max_depth):
+def build_DecisionTree_classifier(X_training, y_training, max_depth, n_folds):
     '''  
     Build a Decision Tree classifier based on the training set X_training, y_training.
 
@@ -91,7 +91,7 @@ def build_DecisionTree_classifier(X_training, y_training, max_depth):
     
     tuned_parameters = [{'max_depth': np.arange(1,max_depth+1)}]
     
-    clf = GridSearchCV(clf,tuned_parameters,cv=3)
+    clf = GridSearchCV(clf,tuned_parameters,cv=n_folds)
     
     clf.fit(X_training,y_training)
     
@@ -99,7 +99,7 @@ def build_DecisionTree_classifier(X_training, y_training, max_depth):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def build_NearestNeighbours_classifier(X_training, y_training,K_max):
+def build_NearestNeighbours_classifier(X_training, y_training, K_max, n_folds):
     '''  
     Build a Nearrest Neighbours classifier based on the training set X_training, y_training.
 
@@ -117,7 +117,7 @@ def build_NearestNeighbours_classifier(X_training, y_training,K_max):
     
     tuned_parameters = [{'n_neighbors': np.arange(1,K_max+1)}]
     
-    clf = GridSearchCV(clf,tuned_parameters,cv=3)
+    clf = GridSearchCV(clf,tuned_parameters,cv=n_folds)
     
     clf.fit(X_training,y_training)
     
@@ -125,7 +125,7 @@ def build_NearestNeighbours_classifier(X_training, y_training,K_max):
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def build_SupportVectorMachine_classifier(X_training, y_training, C_min, C_max):
+def build_SupportVectorMachine_classifier(X_training, y_training, C_min, C_max, n_folds):
     '''  
     Build a Support Vector Machine classifier based on the training set X_training, y_training.
 
@@ -141,7 +141,7 @@ def build_SupportVectorMachine_classifier(X_training, y_training, C_min, C_max):
     
     tuned_parameters = [{'C': np.logspace(C_min,C_max,num=np.absolute(C_max-C_min))}]
     
-    clf = GridSearchCV(clf,tuned_parameters,cv=3)
+    clf = GridSearchCV(clf,tuned_parameters,cv=n_folds)
     
     clf.fit(X_training,y_training)
     
@@ -166,7 +166,7 @@ def build_NeuralNetwork_classifier(X_training, y_training):
     raise NotImplementedError()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-def evaluate_classifier(clf,clf_name, n_folds,X_train,X_test,y_train,y_test,param):
+def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test, param):
     '''
     Plot and evaluate results of cross validation for either decision tree, SVM or kNN classifiers
     Evaluate performance of classifier on both train and test data
@@ -255,20 +255,21 @@ if __name__ == "__main__":
 
     # call your functions here
     # prepare data sets
+    np.random.seed(7)
     X,y = prepare_dataset('medical_records.data')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
     
     
     # train and test nearest neighbor classifier
     K_max = 20 
-    n_folds = 3
-    clf = build_NearestNeighbours_classifier(X_train,y_train,K_max)
+    n_folds = 10
+    clf = build_NearestNeighbours_classifier(X_train,y_train,K_max,n_folds)
     evaluate_classifier(clf,'kNN',n_folds,X_train,X_test,y_train,y_test,K_max)
     #kNN_evaluation(clf,np.arange(1,K_max+1),5,X_train,X_test,y_train,y_test)
     
     # train and test decision tree classifier
     max_depth = 20
-    clf = build_DecisionTree_classifier(X_train, y_train,max_depth)
+    clf = build_DecisionTree_classifier(X_train, y_train,max_depth,n_folds)
     evaluate_classifier(clf,'DT',n_folds,X_train,X_test,y_train,y_test,max_depth)
     #DT_evaluation(clf,np.arange(1,max_depth+1),n_folds,X_train,X_test,y_train,y_test)
 
@@ -276,7 +277,7 @@ if __name__ == "__main__":
     # train and test SVM
     C_min = -4
     C_max = 8
-    clf = build_SupportVectorMachine_classifier(X_train, y_train, C_min, C_max)
+    clf = build_SupportVectorMachine_classifier(X_train, y_train, C_min, C_max,n_folds)
     evaluate_classifier(clf,'SVM',n_folds,X_train,X_test,y_train,y_test,[C_min,C_max])
     #SVM_evaluation(clf,np.logspace(C_min,C_max,num=np.absolute(C_max-C_min)),n_folds,X_train,X_test,y_train,y_test)
 
