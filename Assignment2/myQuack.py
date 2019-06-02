@@ -269,45 +269,32 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
     print(clf_name +' \nNumber of errors on training data: ', train_clf_errors, '\nMSE for training data', train_mse)
     print('Number of errors on test data: ', test_clf_errors, '\nMSE for test data', test_mse)
     print('The best choice of ' + x_label + ': ' + str(clf.best_params_[tuned_param]),'\n')
-    #print('Classification report for training data: \n', classification_report(y_train, pred_train))
-    #print('Classification report for test data: \n',  classification_report(y_test, pred_test))
     # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
 
-
-
 if __name__ == "__main__":
-    # Write a main part that calls the different
-    # functions to perform the required tasks and repeat your experiments.
-
-
-    # call your functions here
-    # prepare data sets
+  
     np.random.seed(7)
     X,y = prepare_dataset('medical_records.data')
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
-
 
     # train and test nearest neighbor classifier
     K_max = 20
     n_folds = 10
     clf = build_NearestNeighbours_classifier(X_train,y_train,K_max,n_folds)
     evaluate_classifier(clf,'kNN',n_folds,X_train,X_test,y_train,y_test,K_max)
-    #kNN_evaluation(clf,np.arange(1,K_max+1),5,X_train,X_test,y_train,y_test)
 
     # train and test decision tree classifier
     max_depth = 20
     clf = build_DecisionTree_classifier(X_train, y_train,max_depth,n_folds)
     evaluate_classifier(clf,'DT',n_folds,X_train,X_test,y_train,y_test,max_depth)
-    #DT_evaluation(clf,np.arange(1,max_depth+1),n_folds,X_train,X_test,y_train,y_test)
-
 
     # train and test SVM
     C_min = -4
     C_max = 8
     clf = build_SupportVectorMachine_classifier(X_train, y_train, C_min, C_max,n_folds)
     evaluate_classifier(clf,'SVM',n_folds,X_train,X_test,y_train,y_test,[C_min,C_max])
-    #SVM_evaluation(clf,np.logspace(C_min,C_max,num=np.absolute(C_max-C_min)),n_folds,X_train,X_test,y_train,y_test)
 
     # Train and test NN classifier
+    nodes = 15
     clf = build_NeuralNetwork_classifier(X_train, y_train)
-    evaluate_classifier(clf, 'NNC', n_folds, X_train, X_test, y_train, y_test, 15)
+    evaluate_classifier(clf, 'NNC', n_folds, X_train, X_test, y_train, y_test, nodes)
