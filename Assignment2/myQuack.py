@@ -269,6 +269,12 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
     print(clf_name +' \nNumber of errors on training data: ', train_clf_errors, '\nMSE for training data', train_mse)
     print('Number of errors on test data: ', test_clf_errors, '\nMSE for test data', test_mse)
     print('The best choice of ' + x_label + ': ' + str(clf.best_params_[tuned_param]),'\n')
+
+    train_precision = 1 - train_clf_errors/len(y_train)
+    test_precision = 1 - test_clf_errors/len(y_test)
+    print('Training precision: ', train_precision)
+    print('Test precision: ', test_precision)
+
     # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
 
 if __name__ == "__main__":
