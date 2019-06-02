@@ -240,7 +240,7 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
              markerfacecolor='blue', markersize=5)
 
     elif clf_name == 'NNC':
-        x_label = 'Neurons'
+        x_label = 'Epochs'
         x_axis = np.arange(1,param+1)
         tuned_param = 'epochs'
 
