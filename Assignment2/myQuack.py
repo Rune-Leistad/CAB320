@@ -17,9 +17,7 @@ from sklearn.metrics import classification_report, mean_squared_error
 
 from keras.models import Sequential
 from keras.layers import Dense, Activation
-from keras.wrappers.scikit_learn import KerasRegressor
-# from sklearn.model_selection import cross_val_score
-# from sklearn.datasets import make_classification
+from keras.wrappers.scikit_learn import KerasRegressor, KerasClassifier
 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -83,7 +81,7 @@ def build_DecisionTree_classifier(X_training, y_training, max_depth, n_folds):
     @return
 	clf : the classifier built in this function
     '''
-    ##         "INSERT YOUR CODE HERE"
+
     clf = DecisionTreeClassifier()
 
     tuned_parameters = [{'max_depth': np.arange(1,max_depth+1)}]
@@ -107,7 +105,6 @@ def build_NearestNeighbours_classifier(X_training, y_training, K_max, n_folds):
 	clf : the classifier built in this function
     '''
 
-    ##         "INSERT YOUR CODE HERE"
     clf = KNeighborsClassifier(algorithm='auto')
 
     tuned_parameters = [{'n_neighbors': np.arange(1,K_max+1)}]
@@ -129,7 +126,7 @@ def build_SupportVectorMachine_classifier(X_training, y_training, C_min, C_max, 
     @return
 	clf : the classifier built in this function
     '''
-    ##         "INSERT YOUR CODE HERE"
+
     clf = SVC(gamma='scale')
 
     tuned_parameters = [{'C': np.logspace(C_min,C_max,num=np.absolute(C_max-C_min))}]
@@ -142,31 +139,26 @@ def build_SupportVectorMachine_classifier(X_training, y_training, C_min, C_max, 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def generate_model(layers, activation):
+def generate_model():
     '''
-    Generates a NN model based on layers and activations. Can easily be expanded
-    to support testing different optimizers and loss functions as well.
+    Generates a NN model based on layers and activations.
     @param
-    layers: layers is a list of neuron count in each layer
-    activation: Decides which activation is used in the weight calculation
     @return
     model: The model of the Neural Network
     '''
     model = Sequential()
-    for i, nodes in enumerate(layers):
-        if i == 0:
-            model.add(Dense(nodes, input_dim=30))
-            model.add(Activation(activation))
-        else:
-            model.add(Dense(nodes))
-            model.add(Activation(activation))
-    model.add(Dense(1))
-    model.compile(optimizer='adam', loss='mse')
+
+    model.add(Dense(30, input_dim=30))
+    model.add(Dense(20, activation='sigmoid'))
+    model.add(Dense(10, activation='sigmoid'))
+    model.add(Dense(1, activation='sigmoid'))
+
+    model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
     return model
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def build_NeuralNetwork_classifier(X_training, y_training, n_folds):
+def build_NeuralNetwork_classifier(X_training, y_training):
     '''
     Build a Neural Network with two dense hidden layers classifier
     based on the training set X_training, y_training.
@@ -179,12 +171,13 @@ def build_NeuralNetwork_classifier(X_training, y_training, n_folds):
     '''
 
     # First finding the best hyperparameter
-    clf = KerasRegressor(build_fn=generate_model, verbose=0)
-    layers = [[30], [15], [30,15], [20, 10], [30,20,10]] # Different sizes of hidden layers
-    activations = ['sigmoid', 'relu'] # Testing two different activations
-    tuned_parameters = dict(layers=layers, activation=activations, epochs=[50])
-    clf = GridSearchCV(clf, param_grid=tuned_parameters, scoring='neg_mean_squared_error')
-    clf.fit(X_training, y_training)
+    clf = KerasClassifier(build_fn=generate_model, verbose=0)
+    epochs = [10,50,100] # Amount of iterations over each traning set
+    batch_size = [20,40,60,80,100] # Different training sample sizes
+    param_grid = dict(batch_size=batch_size, epochs=epochs)
+    grid = GridSearchCV(estimator=clf, param_grid=param_grid, n_jobs=-1)
+
+    clf = grid.fit(X_training, y_training) # Training the classifier
 
     return clf
 
@@ -249,7 +242,7 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
     elif clf_name == 'NNC':
         x_label = 'Neurons'
         x_axis = np.arange(1,param+1)
-        tuned_param = 'neurons'
+        tuned_param = 'epochs'
 
         plt.figure()
         plt.plot(x_axis, scores + std_error, 'b--o', markersize=3)
@@ -275,10 +268,7 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
     # Print summary
     print(clf_name +' \nNumber of errors on training data: ', train_clf_errors, '\nMSE for training data', train_mse)
     print('Number of errors on test data: ', test_clf_errors, '\nMSE for test data', test_mse)
-    if clf_name == 'NNC':
-        print('The best choice of ' + x_label + ': ' + str(clf.best_params_[tuned_param]),'\n')
-    else:
-        print('The best choice of ' + x_label + ': ' + str(clf.best_params_[tuned_param]),'\n')
+    print('The best choice of ' + x_label + ': ' + str(clf.best_params_[tuned_param]),'\n')
     #print('Classification report for training data: \n', classification_report(y_train, pred_train))
     #print('Classification report for test data: \n',  classification_report(y_test, pred_test))
     # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
@@ -319,5 +309,5 @@ if __name__ == "__main__":
     #SVM_evaluation(clf,np.logspace(C_min,C_max,num=np.absolute(C_max-C_min)),n_folds,X_train,X_test,y_train,y_test)
 
     # Train and test NN classifier
-    clf = build_NeuralNetwork_classifier(X_train, y_train, n_folds)
-    evaluate_classifier(clf, 'NNC', n_folds, X_train, X_test, y_train, y_test, n_folds)
+    clf = build_NeuralNetwork_classifier(X_train, y_train)
+    evaluate_classifier(clf, 'NNC', n_folds, X_train, X_test, y_train, y_test, 15)
