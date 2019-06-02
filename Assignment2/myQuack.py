@@ -16,8 +16,8 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import classification_report, mean_squared_error
 
 from keras.models import Sequential
-from keras.layers import Dense
-# from keras.wrappers.scikit_learn import KerasClassifier
+from keras.layers import Dense, Activation
+from keras.wrappers.scikit_learn import KerasRegressor
 # from sklearn.model_selection import cross_val_score
 # from sklearn.datasets import make_classification
 
@@ -142,7 +142,31 @@ def build_SupportVectorMachine_classifier(X_training, y_training, C_min, C_max, 
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-def build_NeuralNetwork_classifier(X_training, y_training):
+def generate_model(layers, activation):
+    '''
+    Generates a NN model based on layers and activations. Can easily be expanded
+    to support testing different optimizers and loss functions as well.
+    @param
+    layers: layers is a list of neuron count in each layer
+    activation: Decides which activation is used in the weight calculation
+    @return
+    model: The model of the Neural Network
+    '''
+    model = Sequential()
+    for i, nodes in enumerate(layers):
+        if i == 0:
+            model.add(Dense(nodes, input_dim=30))
+            model.add(Activation(activation))
+        else:
+            model.add(Dense(nodes))
+            model.add(Activation(activation))
+    model.add(Dense(1))
+    model.compile(optimizer='adam', loss='mse')
+    return model
+
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+def build_NeuralNetwork_classifier(X_training, y_training, n_folds):
     '''
     Build a Neural Network with two dense hidden layers classifier
     based on the training set X_training, y_training.
@@ -154,22 +178,13 @@ def build_NeuralNetwork_classifier(X_training, y_training):
 	clf : the classifier built in this function
     '''
 
-    tuned_parameters = [{'n_neighbors': np.arange(1,K_max+1)}]
-    clf = Sequential()
-    clf.add(Dense(30, input_dim=30, activation='relu'))
-    clf.add(Dense(15, activation='relu'))
-    clf.add(Dense(1, activation='sigmoid'))
-    clf.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
-
-
-    clf.fit(X_training, y_training, epochs=150, verbose=0)
-    # scores = clf.evaluate(X_training, y_training)
-    # evaluation = clf.evaluate(X_test, y_test)
-
-    # print(scores)
-    # print(evaluation)
-    # print("\n%s: %.2f%%" % (clf.metrics_names[1], scores[1]*100))
-    # print("\n%s: %.2f%%" % (clf.metrics_names[1], evaluation[1]*100))
+    # First finding the best hyperparameter
+    clf = KerasRegressor(build_fn=generate_model, verbose=0)
+    layers = [[30], [15], [30,15], [20, 10], [30,20,10]] # Different sizes of hidden layers
+    activations = ['sigmoid', 'relu'] # Testing two different activations
+    tuned_parameters = dict(layers=layers, activation=activations, epochs=[50])
+    clf = GridSearchCV(clf, param_grid=tuned_parameters, scoring='neg_mean_squared_error')
+    clf.fit(X_training, y_training)
 
     return clf
 
@@ -191,15 +206,8 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
     '''
 
     # Calculate scores
-    scores = None
-    scores_std = None
-    if clf_name == 'NNC':
-        eval = clf.evaluate(X_test, y_test, verbose=0)
-        scores = eval[0]
-        scores_std = eval[1]
-    else:
-        scores = clf.cv_results_['mean_test_score']
-        scores_std = clf.cv_results_['std_test_score']
+    scores = clf.cv_results_['mean_test_score']
+    scores_std = clf.cv_results_['std_test_score']
     std_error = scores_std / np.sqrt(n_folds)
 
     # Set figure parameters and make figure
@@ -233,7 +241,6 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
         tuned_param = 'C'
 
         plt.figure()
-        
         plt.semilogx(x_axis, scores + std_error, 'b--o', markersize=3)
         plt.semilogx(x_axis, scores - std_error, 'b--o', markersize=3)
         plt.semilogx(x_axis, scores,color='black', marker='o',
@@ -245,7 +252,6 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
         tuned_param = 'neurons'
 
         plt.figure()
-        
         plt.plot(x_axis, scores + std_error, 'b--o', markersize=3)
         plt.plot(x_axis, scores - std_error, 'b--o', markersize=3)
         plt.plot(x_axis, scores,color='black', marker='o',
@@ -269,7 +275,10 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
     # Print summary
     print(clf_name +' \nNumber of errors on training data: ', train_clf_errors, '\nMSE for training data', train_mse)
     print('Number of errors on test data: ', test_clf_errors, '\nMSE for test data', test_mse)
-    print('The best choice of ' + x_label + ': ' + str(clf.best_params_[tuned_param]),'\n')
+    if clf_name == 'NNC':
+        print('The best choice of ' + x_label + ': ' + str(clf.best_params_[tuned_param]),'\n')
+    else:
+        print('The best choice of ' + x_label + ': ' + str(clf.best_params_[tuned_param]),'\n')
     #print('Classification report for training data: \n', classification_report(y_train, pred_train))
     #print('Classification report for test data: \n',  classification_report(y_test, pred_test))
     # source: https://scikit-learn.org/stable/auto_examples/exercises/plot_cv_diabetes.html#sphx-glr-auto-examples-exercises-plot-cv-diabetes-py
@@ -310,6 +319,5 @@ if __name__ == "__main__":
     #SVM_evaluation(clf,np.logspace(C_min,C_max,num=np.absolute(C_max-C_min)),n_folds,X_train,X_test,y_train,y_test)
 
     # Train and test NN classifier
-    #neurons = 16
-    clf = build_NeuralNetwork_classifier(X_train, y_train)
-    evaluate_classifier(clf, 'NNC', n_folds, X_train, X_test, y_train, y_test, 1)
+    clf = build_NeuralNetwork_classifier(X_train, y_train, n_folds)
+    evaluate_classifier(clf, 'NNC', n_folds, X_train, X_test, y_train, y_test, n_folds)
