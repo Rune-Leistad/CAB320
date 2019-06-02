@@ -233,10 +233,7 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
         tuned_param = 'C'
 
         plt.figure()
-        print('SVM')
-        print(x_axis)
-        print(scores)
-        print(std_error)
+        
         plt.semilogx(x_axis, scores + std_error, 'b--o', markersize=3)
         plt.semilogx(x_axis, scores - std_error, 'b--o', markersize=3)
         plt.semilogx(x_axis, scores,color='black', marker='o',
@@ -248,10 +245,7 @@ def evaluate_classifier(clf,clf_name, n_folds, X_train, X_test, y_train, y_test,
         tuned_param = 'neurons'
 
         plt.figure()
-        print('NNC')
-        print(x_axis)
-        print(scores)
-        print(std_error)
+        
         plt.plot(x_axis, scores + std_error, 'b--o', markersize=3)
         plt.plot(x_axis, scores - std_error, 'b--o', markersize=3)
         plt.plot(x_axis, scores,color='black', marker='o',
